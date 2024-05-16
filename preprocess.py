@@ -7,12 +7,14 @@ from tqdm import tqdm
 
 DATA_PATH = "./data/"
 
+
 # Input: Folder Path
 # Output: Tuple (Label, Indices of the labels, one-hot encoded labels)
 def get_labels(path=DATA_PATH):
     labels = os.listdir(path)
     label_indices = np.arange(0, len(labels))
     return labels, label_indices, to_categorical(label_indices)
+
 
 # convert file to wav2mfcc
 # Mel-frequency cepstral coefficients
@@ -40,7 +42,7 @@ def save_data_to_array(path=DATA_PATH, max_len=11, n_mfcc=20):
         # Init mfcc vectors
         mfcc_vectors = []
 
-        wavfiles = [path + label + '/' + wavfile for wavfile in os.listdir(path + '/' + label)]
+        wavfiles = [path + label + '/' + wavfile for wavfile in os.listdir(os.path.join(path, label)) if wavfile.lower().endswith(".wav")]
         for wavfile in tqdm(wavfiles, "Saving vectors of label - '{}'".format(label)):
             mfcc = wav2mfcc(wavfile, max_len=max_len, n_mfcc=n_mfcc)
             mfcc_vectors.append(mfcc)
@@ -72,7 +74,7 @@ def prepare_dataset(path=DATA_PATH):
     data = {}
     for label in labels:
         data[label] = {}
-        data[label]['path'] = [path  + label + '/' + wavfile for wavfile in os.listdir(path + '/' + label)]
+        data[label]['path'] = [path  + label + '/' + wavfile for wavfile in os.listdir(os.path.join(path, label)) if wavfile.lower().endswith(".wav")]
 
         vectors = []
 
@@ -80,7 +82,7 @@ def prepare_dataset(path=DATA_PATH):
             wave, sr = librosa.load(wavfile, mono=True, sr=None)
             # Downsampling
             wave = wave[::3]
-            mfcc = librosa.feature.mfcc(wave, sr=16000)
+            mfcc = librosa.feature.mfcc(y=wave, sr=16000)
             vectors.append(mfcc)
 
         data[label]['mfcc'] = vectors
